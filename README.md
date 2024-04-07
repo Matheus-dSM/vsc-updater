@@ -1,4 +1,4 @@
-#VSCodium Updater
+# VSCodium Updater
 
 The goal of this project is create an updater for VSCodium in C.
 
