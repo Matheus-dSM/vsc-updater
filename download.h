@@ -1,6 +1,6 @@
 #include <string.h>//Strings
 #include <stdlib.h>//Misc, mainly malloc
-#include <unistd.h>//For other things
+#include <unistd.h>//For chdir
 #include <sys/stat.h>//For creating the dir
 #include <curl/curl.h>
 #include "url-vsc.h"
