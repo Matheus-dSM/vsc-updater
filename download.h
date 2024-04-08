@@ -1,5 +1,7 @@
 #include <string.h>//Strings
 #include <stdlib.h>//Misc, mainly malloc
+#include <unistd.h>//For other things
+#include <sys/stat.h>//For creating the dir
 #include <curl/curl.h>
 #include "url-vsc.h"
 
@@ -13,6 +15,8 @@ int getfile(void){
     CURLcode rerr;
     FILE *dFile;
     char *url = URL; 
+    char *dname = D_NAME;
+    char *tdname = TD_NAME;
 
     //Setting base URL
     curl_easy_setopt(curl, CURLOPT_URL, url);
@@ -26,7 +30,7 @@ int getfile(void){
         fprintf(stderr, "Redirect URL:%s\n", url);
         char *token = strtok(url, "/");  
         char **nurl = malloc(10 * sizeof(char *));//Allocates 10 pointers. 
-                                                //TODO make this allocation automatic
+                                                
         //Tokenize the URL
         for(int i = 0; token != NULL; i++){
             nurl[i] = malloc(strlen(token) + 1);//Token size + null end char
@@ -65,6 +69,33 @@ int getfile(void){
         vs = strlen(nurl[7]);
         es = strlen(nurl[8]);
 
+        //Moving to tmp and creating a dir there. There may be a faster way of doing this
+        //Assumes /tmp is created by default
+        if(chdir(tdname) == 0){
+            fprintf(stderr, "Moved to %s\n", tdname);
+            //Try to move first, if not then create
+            if(chdir(dname) == 0){
+                fprintf(stderr,"%s already created, moving to it\nContinuing...\n", dname);
+            }
+            else if(mkdir(dname, 0755) == 0){
+                fprintf(stderr, "Created %s\n", dname);
+                if(chdir(dname) == 0){
+                    fprintf(stderr,"Moved to %s\nContinuing...\n", dname);
+                }
+                else{
+                    perror("Failed to move to new directory");
+                    return 1;
+                }
+            }
+            else{
+                perror("Failed to create new directory");
+                return 1;
+            }
+        }
+        else{
+            perror("Failed to move to /tmp");
+            return 1;
+        }
 
         //Setting url
         //Maybe unnecessary, but...
