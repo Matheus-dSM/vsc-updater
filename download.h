@@ -1,15 +1,15 @@
+#include <stdio.h>
 #include <string.h>//Strings
 #include <stdlib.h>//Misc, mainly malloc
 #include <unistd.h>//For chdir
 #include <sys/stat.h>//For creating the dir
 #include <stdbool.h>//For bool for the -v flag check
 #include <curl/curl.h>
-#include "global-vsc.h"
 
 static size_t writeFile(char *data, size_t size, size_t nmemb, void *stream);
 
 
-int getfile(void){
+struct returnlist getfile(void){
 
     //Basic setup
     curl_global_init(CURL_GLOBAL_ALL);
@@ -19,6 +19,11 @@ int getfile(void){
     char *url = URL; 
     char *dname = D_NAME;
     char *tdname = TD_NAME;
+    struct returnlist rlist;
+    rlist.returncode = 1;
+    strcpy(rlist.filelist[0], "FAIL");
+    strcpy(rlist.filelist[1], "FAIL");
+
 
     //Setting base URL
     curl_easy_setopt(curl, CURLOPT_URL, url);
@@ -52,7 +57,7 @@ int getfile(void){
         snprintf(murl, (msize + 1), "%s//%s/%s/%s/%s/download/%s/", nurl[0], nurl[1], nurl[2], nurl[3], nurl[4], nurl[6]);
         strcpy(url, murl); 
         int ns = strlen(nurl[2]), vs = strlen(nurl[6]), es = strlen(FILE_END);
-        nurl[7] = malloc((ns + vs + es) +1);
+        nurl[7] = malloc((ns + vs + es) + 1);
         nurl[8] = malloc((ns + vs + (es = strlen(SHA_END))) + 1);
         //Making File name
         strcat(nurl[2], "-");
@@ -92,21 +97,20 @@ int getfile(void){
                 }
                 else{
                     perror("Failed to move to new directory");
-                    return 1;
+                    return rlist;
                 }
             }
             else{
                 perror("Failed to create new directory");
-                return 1;
+                return rlist;
             }
         }
         else{
             perror("Failed to move to /tmp");
-            return 1;
+            return rlist;
         }
 
         //Setting url
-        //Maybe unnecessary, but...
         char turl[ns + vs + es + 1];
         strcpy(turl, nurl[9]);
         strcat(turl, nurl[7]);
@@ -135,7 +139,6 @@ int getfile(void){
         fclose(dFile);
         
         //Closing the rest
-        
         if(vflag == true || dflag == true){fprintf(stderr, "File saved\n");}
         curl_easy_cleanup(curl);
         curl_global_cleanup();
@@ -144,6 +147,11 @@ int getfile(void){
         //Tidying up. Maybe some of the pointer were unnecessary but that was fun
         free(murl);
         murl = NULL;
+        rlist.returncode = 0;
+        strcpy(rlist.filelist[0], nurl[7]);
+        strcpy(rlist.filelist[1], nurl[8]);
+        if(dflag == true){fprintf(stderr,"FILELIST:\n1 --> %s\n2 --> %s",
+                                        rlist.filelist[0], rlist.filelist[1]);}
         for(int i = 0; i < 10; i++){
             free(nurl[i]);
             nurl[i] = NULL;
@@ -151,11 +159,12 @@ int getfile(void){
         free(nurl);
         nurl = NULL;
         if(vflag == true || dflag == true){fprintf(stderr,"Done.\n");}
-        return 0;
+
+        return rlist;
     }
     else{
         fprintf(stderr,"Failed to set URL\n");
-        return 1;
+        return rlist;
     }
 }
 

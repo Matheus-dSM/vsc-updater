@@ -1,23 +1,24 @@
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdbool.h>
+#include "global-vsc.h"
 #include "download.h"
 #include "move.h"
-#include "global-vsc.h"
 
 bool dflag = false;
 bool vflag = false;
 
 int main(int argc, char *argv[]){
-
     //Makes a list of flags to pass to other files
     //Don't know other way
     //Struct on url-vsc.h
+    bool has_arg = false;
     char *actpair[2];//REMINDER Free the associated malloc'd pointers later
     if(argc > 1){
         for(int i = 1; argv[i] != NULL; i++){
-            int c;
+            int c;//TODO add a --help or -h flag
             if(strcmp(argv[i], "--verbose") == 0){
                 c = 0;
             }
@@ -55,6 +56,7 @@ int main(int argc, char *argv[]){
                     actpair[1] = malloc(strlen(argv[i + 1]) + 1);
                     strcpy(actpair[1], argv[i + 1]);
                     i++;
+                    has_arg = true;
                 }
             }
         }
@@ -71,21 +73,22 @@ int main(int argc, char *argv[]){
 
     //TODO remove most fprinft from other files and most of them here?
     fprintf(stderr, "Downloading files...\n");
-    if(getfile() != 0){
+    struct returnlist rplist; 
+    rplist = getfile();
+    if(rplist.returncode != 0){
         fprintf(stderr,"Failed to download files\n");
         return 1;
     }
     fprintf(stderr, "Done.\nFiles downloaded to /tmp\n"); 
-    return 0;
     fprintf(stderr, "Decompressing and moving...\n");
-    if(move() != 0){
+    if(move(rplist) != 0){
         fprintf(stderr, "Failed to execute changes\n");
         return 1;
     }
-    fprintf(stderr, "Done.");
+    fprintf(stderr, "Done.\n");
     //Freeing list flags
     //Possibly unnecessary loop
-    if(actpair[0] != NULL){
+    if(has_arg == true){
         for(int i = 0; i < 1; i++){
             free(actpair[i]);
             actpair[i] = NULL;

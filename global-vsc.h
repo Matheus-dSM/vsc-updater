@@ -11,3 +11,8 @@
 extern bool vflag;
 extern bool dflag;
 
+struct returnlist{
+    int returncode;
+    char *filelist[2];//Since we are only dealing with two files, may change later
+};
+
