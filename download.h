@@ -2,13 +2,15 @@
 #include <stdlib.h>//Misc, mainly malloc
 #include <unistd.h>//For chdir
 #include <sys/stat.h>//For creating the dir
+#include <stdbool.h>//For bool for the -v flag check
 #include <curl/curl.h>
-#include "url-vsc.h"
+#include "global-vsc.h"
 
 static size_t writeFile(char *data, size_t size, size_t nmemb, void *stream);
 
 
 int getfile(void){
+
     //Basic setup
     curl_global_init(CURL_GLOBAL_ALL);
     CURL *curl = curl_easy_init();
@@ -21,22 +23,27 @@ int getfile(void){
     //Setting base URL
     curl_easy_setopt(curl, CURLOPT_URL, url);
     rerr = curl_easy_perform(curl);
-    fprintf(stderr,"URL: %s\n", url);
+
+    //Unelegant use of if statements for the verbose/debug mode but
+    //but I'll keep it like this to avoid further trouble
+
+    if(dflag == true){fprintf(stderr,"URL: %s\n", url);}
     //Getting Latest file name from redirect
     if(rerr == CURLE_OK){
         //Get Redirect
         int sc = 0;//size counter for later
         curl_easy_getinfo(curl, CURLINFO_REDIRECT_URL, &url);//Dunno what else to do
-        fprintf(stderr, "Redirect URL:%s\n", url);
+        if(dflag == true){fprintf(stderr, "Redirect URL:%s\n", url);}
         char *token = strtok(url, "/");  
         char **nurl = malloc(10 * sizeof(char *));//Allocates 10 pointers. 
                                                 
         //Tokenize the URL
         for(int i = 0; token != NULL; i++){
+            //Maybe I could've used strdup. Will keep that in mind for future uses
             nurl[i] = malloc(strlen(token) + 1);//Token size + null end char
             strcpy(nurl[i], token);
             token = strtok(NULL, "/");//Continue from where strtok left off
-            fprintf(stderr,"Token %d is %s\n", i, nurl[i]);
+            if(dflag == true){fprintf(stderr,"Token %d is %s\n", i, nurl[i]);}
             //Total length of elements added up
             sc += strlen(nurl[i]);
         }  
@@ -47,7 +54,6 @@ int getfile(void){
         int ns = strlen(nurl[2]), vs = strlen(nurl[6]), es = strlen(FILE_END);
         nurl[7] = malloc((ns + vs + es) +1);
         nurl[8] = malloc((ns + vs + (es = strlen(SHA_END))) + 1);
-        //fprintf(stderr,"URL: %s\n", murl);
         //Making File name
         strcat(nurl[2], "-");
         strcpy(nurl[7], nurl[2]);
@@ -62,8 +68,10 @@ int getfile(void){
         strcpy(nurl[9], murl);
 
 
-        fprintf(stderr, "FILE: %s\nSHA: %s\nDownload URL: %s\n", nurl[7], nurl[8], nurl[9]);
-        
+        if(vflag == true || dflag == true){
+            fprintf(stderr, "FILE: %s\nSHA: %s\nDownload URL: %s\n",
+            nurl[7], nurl[8], nurl[9]);
+        }
         //Preparing
         ns = strlen(nurl[9]);
         vs = strlen(nurl[7]);
@@ -72,15 +80,15 @@ int getfile(void){
         //Moving to tmp and creating a dir there. There may be a faster way of doing this
         //Assumes /tmp is created by default
         if(chdir(tdname) == 0){
-            fprintf(stderr, "Moved to %s\n", tdname);
+            if(vflag == true || dflag == true){fprintf(stderr, "Moved to %s\n", tdname);}
             //Try to move first, if not then create
             if(chdir(dname) == 0){
-                fprintf(stderr,"%s already created, moving to it\nContinuing...\n", dname);
+                if(vflag == true || dflag == true){fprintf(stderr,"%s already created, moving to it\nContinuing...\n", dname);}
             }
             else if(mkdir(dname, 0755) == 0){
-                fprintf(stderr, "Created %s\n", dname);
+                if(vflag == true || dflag == true){fprintf(stderr, "Created %s\n", dname);}
                 if(chdir(dname) == 0){
-                    fprintf(stderr,"Moved to %s\nContinuing...\n", dname);
+                    if(vflag == true || dflag == true){fprintf(stderr,"Moved to %s\nContinuing...\n", dname);}
                 }
                 else{
                     perror("Failed to move to new directory");
@@ -102,17 +110,16 @@ int getfile(void){
         char turl[ns + vs + es + 1];
         strcpy(turl, nurl[9]);
         strcat(turl, nurl[7]);
-        fprintf(stderr, "%s\n", nurl[9]);
         curl_easy_setopt(curl, CURLOPT_URL, turl);
         curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
         dFile = fopen(nurl[7], "wb");
-        fprintf(stderr,"File will be downloaded from: %s \n", turl);
+        if(vflag == true || dflag == true){fprintf(stderr,"File will be downloaded from: %s \n", turl);}
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeFile);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, dFile);
         curl_easy_perform(curl);
 
         fclose(dFile);
-        fprintf(stderr, "File saved\n");
+        if(vflag == true || dflag == true){fprintf(stderr, "File saved\n");}
 
         //Now for the other
         
@@ -121,7 +128,7 @@ int getfile(void){
         curl_easy_setopt(curl, CURLOPT_URL, turl);
         curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
         dFile = fopen(nurl[8], "wb");
-        fprintf(stderr,"File will be downloaded from: %s \n", turl);
+        if(vflag == true || dflag == true){fprintf(stderr,"File will be downloaded from: %s \n", turl);}
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeFile);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, dFile);
         curl_easy_perform(curl);
@@ -129,7 +136,7 @@ int getfile(void){
         
         //Closing the rest
         
-        fprintf(stderr, "File saved\n");
+        if(vflag == true || dflag == true){fprintf(stderr, "File saved\n");}
         curl_easy_cleanup(curl);
         curl_global_cleanup();
 
@@ -143,8 +150,8 @@ int getfile(void){
         }
         free(nurl);
         nurl = NULL;
-        fprintf(stderr,"Done.\n");
-
+        if(vflag == true || dflag == true){fprintf(stderr,"Done.\n");}
+        return 0;
     }
     else{
         fprintf(stderr,"Failed to set URL\n");
