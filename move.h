@@ -8,7 +8,7 @@
 #include <dirent.h>//For using directories
 
 
-int move(struct returnlist rlist){
+int move(char **filearray){
     //Getting the current directory and changing it accordingly
     char cdir[PATH_MAX];//Current dir
     char *tdir = malloc((strlen(TD_NAME) + strlen(D_NAME) + strlen("/")) + 1);// target dir
@@ -46,8 +46,8 @@ int move(struct returnlist rlist){
            strcmp(entry->d_name, "..") == 0){
             continue;//If this jump to end of for loop
         }
-        if(strcmp(entry->d_name, rlist.filelist[0]) == 0 ||
-           strcmp(entry->d_name, rlist.filelist[1]) == 0){
+        if(strcmp(entry->d_name, filearray[0]) == 0 ||
+           strcmp(entry->d_name, filearray[1]) == 0){
             if(dflag == true){fprintf(stderr,"MATCHFOUND\n");}
             mc++;
         }

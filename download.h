@@ -9,7 +9,7 @@
 static size_t writeFile(char *data, size_t size, size_t nmemb, void *stream);
 
 
-struct returnlist getfile(void){
+char **getfile(void){
 
     //Basic setup
     curl_global_init(CURL_GLOBAL_ALL);
@@ -19,12 +19,7 @@ struct returnlist getfile(void){
     char *url = URL; 
     char *dname = D_NAME;
     char *tdname = TD_NAME;
-    struct returnlist rlist;
-    rlist.returncode = 1;
-    strcpy(rlist.filelist[0], "FAIL");
-    strcpy(rlist.filelist[1], "FAIL");
-
-
+    char **arr;
     //Setting base URL
     curl_easy_setopt(curl, CURLOPT_URL, url);
     rerr = curl_easy_perform(curl);
@@ -97,17 +92,17 @@ struct returnlist getfile(void){
                 }
                 else{
                     perror("Failed to move to new directory");
-                    return rlist;
+                    return arr;
                 }
             }
             else{
                 perror("Failed to create new directory");
-                return rlist;
+                return arr;
             }
         }
         else{
             perror("Failed to move to /tmp");
-            return rlist;
+            return arr;
         }
 
         //Setting url
@@ -145,13 +140,14 @@ struct returnlist getfile(void){
 
         //Last tidying up
         //Tidying up. Maybe some of the pointer were unnecessary but that was fun
+
+        arr = malloc(2 * sizeof(char *));
+        arr[0] = malloc(strlen(nurl[7]) + 1) ;       
+        strcpy(arr[0], nurl[7]);
+        arr[1] = malloc(strlen(nurl[8]) + 1);
+        strcpy(arr[1], nurl[8]);
         free(murl);
         murl = NULL;
-        rlist.returncode = 0;
-        strcpy(rlist.filelist[0], nurl[7]);
-        strcpy(rlist.filelist[1], nurl[8]);
-        if(dflag == true){fprintf(stderr,"FILELIST:\n1 --> %s\n2 --> %s",
-                                        rlist.filelist[0], rlist.filelist[1]);}
         for(int i = 0; i < 10; i++){
             free(nurl[i]);
             nurl[i] = NULL;
@@ -159,12 +155,13 @@ struct returnlist getfile(void){
         free(nurl);
         nurl = NULL;
         if(vflag == true || dflag == true){fprintf(stderr,"Done.\n");}
+        
 
-        return rlist;
+        return arr;
     }
     else{
         fprintf(stderr,"Failed to set URL\n");
-        return rlist;
+        return arr;
     }
 }
 

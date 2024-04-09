@@ -7,8 +7,15 @@
 #include "download.h"
 #include "move.h"
 
+//Files (I wonder if these names are bad...)
+//download.h --> downloads files from url in url-vsc.h
+//move.h --> decompress and move to a location and overall makes it feel native
+//build.h --> if the rest went well, this will allow for allowing you to build from source  
+//manager.h --> if we get this far, this will be for managing versions or othen adv actions
+
 bool dflag = false;
 bool vflag = false;
+
 
 int main(int argc, char *argv[]){
     //Makes a list of flags to pass to other files
@@ -61,7 +68,7 @@ int main(int argc, char *argv[]){
             }
         }
     }
-    if(dflag == true && actpair[0] != NULL){fprintf(stderr,"The pair is: %s and %s\n",actpair[0], actpair[1]);}
+    if(dflag == true && actpair[0] != NULL){fprintf(stderr,"The pair is: %s and %s\n", actpair[0], actpair[1]);}
     //TODO ADD switch case for options, like to delete etc
     /*
     switch(actpair[0]){
@@ -70,18 +77,16 @@ int main(int argc, char *argv[]){
             ...
     }
     */
-
     //TODO remove most fprinft from other files and most of them here?
     fprintf(stderr, "Downloading files...\n");
-    struct returnlist rplist; 
-    rplist = getfile();
-    if(rplist.returncode != 0){
+    char **filearray = getfile();
+    if(filearray == NULL){
         fprintf(stderr,"Failed to download files\n");
         return 1;
     }
     fprintf(stderr, "Done.\nFiles downloaded to /tmp\n"); 
     fprintf(stderr, "Decompressing and moving...\n");
-    if(move(rplist) != 0){
+    if(move(filearray) != 0){
         fprintf(stderr, "Failed to execute changes\n");
         return 1;
     }
@@ -95,9 +100,5 @@ int main(int argc, char *argv[]){
         }
     }
     return 0;
-    //Files (I wonder if these names are bad...)
-    //download.h --> downloads files from url in url-vsc.h
-    //move.h --> decompress and move to a location and overall makes it feel native
-    //build.h --> if the rest went well, this will allow for allowing you to build from source  
-    //manager.h --> if we get this far, this will be for managing versions or othen adv actions
+
 }
