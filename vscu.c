@@ -54,10 +54,12 @@ int main(int argc, char *argv[]){
                 case 3:
                     fprintf(stderr,"Skipping download\n");
                     sdflag = true; 
+                    dflag = true;
                 default://???
                     break;
             }
             //just setting the layout for future features. Crude work. add more || later
+            //Add a feature for -h or --help later
             if(strcmp(argv[i], "-d") == 0){
                 //If target of action NULL return 1 and error message;
                 if(argv[i+1] == NULL){
@@ -94,7 +96,10 @@ int main(int argc, char *argv[]){
         fprintf(stderr,"Failed to download files\n");
         return 1;
     }
-    fprintf(stderr, "Done.\nFiles downloaded to /tmp\n"); 
+    if(sdflag == false){
+        fprintf(stderr, "Downloading files...\n");
+        fprintf(stderr, "Done.\nFiles downloaded to /tmp\n"); 
+    }
     fprintf(stderr, "Decompressing and moving...\n");
     if(move(filearray) != 0){
         fprintf(stderr, "Failed to execute changes\n");

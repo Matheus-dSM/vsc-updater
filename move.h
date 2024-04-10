@@ -25,7 +25,7 @@ int move(char **filearray){
     strcat(tdir, D_NAME);
     if(dflag == true){fprintf(stderr, "CURRENT:%s\nTARGET:%s\n",cdir, tdir);}
     if(strcmp(cdir, tdir) != 0){
-        if(dflag == true || vflag == true){fprintf(stderr, "Changing directory to: %s\n", tdir);}
+        if(dflag == true || vflag == true){fprintf(stderr, "Changing directory to:%s\n", tdir);}
     }
     else{
         if(dflag == true || vflag == true){fprintf(stderr, "Already on directory %s\n", tdir);}
@@ -38,7 +38,6 @@ int move(char **filearray){
         fprintf(stderr,"Failed to read contents of directory\n");
         return 1;
     }
-    
     //There may be a better way of doing this
     int mc = 0;
     for(;(entry = readdir(wdir)) != NULL;){
