@@ -15,6 +15,7 @@
 
 bool dflag = false;
 bool vflag = false;
+bool sdflag = false;
 
 
 int main(int argc, char *argv[]){
@@ -22,6 +23,7 @@ int main(int argc, char *argv[]){
     //Don't know other way
     //Struct on url-vsc.h
     bool has_arg = false;
+    bool sdflag = false;
     char *actpair[2];//REMINDER Free the associated malloc'd pointers later
     if(argc > 1){
         for(int i = 1; argv[i] != NULL; i++){
@@ -35,6 +37,9 @@ int main(int argc, char *argv[]){
             else if(strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--version") == 0){
                 c = 2;
             }
+            else if(strcmp(argv[i], "--DEBUG=SKIP-DL") == 0){
+                c = 3;
+            }
             switch(c){
                 case 0:
                     vflag = true;
@@ -46,6 +51,9 @@ int main(int argc, char *argv[]){
                     fprintf(stderr,"Program version: %s\n", VERSION);
                     return 0;
                     break;
+                case 3:
+                    fprintf(stderr,"Skipping download\n");
+                    sdflag = true; 
                 default://???
                     break;
             }
@@ -78,7 +86,9 @@ int main(int argc, char *argv[]){
     }
     */
     //TODO remove most fprinft from other files and most of them here?
-    fprintf(stderr, "Downloading files...\n");
+    if(sdflag == false){
+        fprintf(stderr, "Downloading files...\n");
+    }
     char **filearray = getfile();
     if(filearray == NULL){
         fprintf(stderr,"Failed to download files\n");

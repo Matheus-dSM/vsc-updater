@@ -20,6 +20,11 @@ char **getfile(void){
     char *dname = D_NAME;
     char *tdname = TD_NAME;
     char **arr;
+
+    if(sdflag == true){
+        arr = malloc(4 * sizeof(char *));
+        arr[0] = malloc()
+    }
     //Setting base URL
     curl_easy_setopt(curl, CURLOPT_URL, url);
     rerr = curl_easy_perform(curl);

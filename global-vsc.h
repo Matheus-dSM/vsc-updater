@@ -10,6 +10,7 @@
 
 extern bool vflag;
 extern bool dflag;
+extern bool sdflag;
 
 struct returnlist{
     int returncode;
