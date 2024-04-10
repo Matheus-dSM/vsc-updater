@@ -36,6 +36,7 @@ char **getfile(void){
         strcpy(arr[2], c);
         arr[3] = malloc(strlen(d) + 1);
         strcpy(arr[3], d);
+        return arr;
     }
     //Setting base URL
     curl_easy_setopt(curl, CURLOPT_URL, url);
