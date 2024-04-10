@@ -55,7 +55,10 @@ int move(char **filearray){
         fprintf(stderr,"Couldn't find files to extract\n");
         return 1;
     }
-    
+    //Make folder for version 
+    //Move there, extract file
+    //Go back, make a new folder in user's home
+    //Go back with .. then move it to user's home.
     closedir(wdir);
     free(tdir);
     return 0;
