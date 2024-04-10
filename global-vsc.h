@@ -17,3 +17,72 @@ struct returnlist{
     char *filelist[2];//Since we are only dealing with two files, may change later
 };
 
+static void extract(const char *filename){
+    struct archive *reader;
+    struct archive *writer;
+    struct archive_entry *entry;
+    int flags;
+    int response;
+
+    //What to keep from extracted files
+    flags = ARCHIVE_EXTRACT_TIME;
+    flags |= ARCHIVE_EXTRACT_PERM;
+    flags |= ARCHIVE_EXTRACT_ACL;
+    flags |= ARCHIVE_EXTRACT_FFLAGS;
+
+    //Initialize reader and set options
+    reader = archive_read_new();
+    archive_read_support_format_all(reader);
+    archive_read_support_filter_all(reader);
+    //Initialize writer and set option
+    writer = archive_write_disk_new();
+    archive_write_disk_set_option(writer, flags);
+    archive_write_disk_set_standard_lookup(writer);
+    //Open archive, quit if fail
+    if((response = archive_read_open_filename(reader, filename, 10240))){
+        exit(1);
+    }
+    //Loop through entries
+    for(;;){
+        //Read next entry in archive
+        response = archive_read_next_header(reader, &entry);
+        if(response == ARCHIVE_EOF){//Stop if archive end
+            break;
+        }
+        if(response < ARCHIVE_OK){//Warn if error
+            fprintf(stderr, "%s\n", archive_error_string(reader));
+        }
+        if(response < ARCHIVE_WARN){//Quit if big error
+            exit(1);
+        }
+        //Write what was read
+        response = archive_write_header(writer, entry);
+        if(response < ARCHIVE_OK){//Warn if error
+            fprintf(stderr, "%s\n", archive_error_string(writer));
+        }
+        //If no error
+        else if(archive_entry_size(entry) > 0){//Check if it has data
+            response = copy_data(reader, writer);//Exchange data between them reader-->writer
+            if(response < ARCHIVE_OK){//Warn if error
+                fprintf(stderr, "%s\n", archive_error_string(writer));
+            }
+            if(response < ARCHIVE_WARN){//Quit if big error
+                exit(1);
+            }
+        }
+    }
+    //After done, last touches to what is being written
+    response = archive_write_finish_entry(writer);
+        if(response < ARCHIVE_OK){//Warn if error
+            fprintf(stderr, "%s\n", archive_error_string(writer));
+        }
+        if(response < ARCHIVE_WARN){//Quit if big error
+            exit(1);
+        }
+    //Closing and freeing them
+    archive_read_close(reader);
+    archive_read_free(reader);
+    archive_write_close(writer);
+    archive_write_free(writer);
+    exit(0);
+}
