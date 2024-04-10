@@ -21,9 +21,21 @@ char **getfile(void){
     char *tdname = TD_NAME;
     char **arr;
 
+    //Just for testing without keeping downloading
     if(sdflag == true){
         arr = malloc(4 * sizeof(char *));
-        arr[0] = malloc()
+            char *a = "VSCodium-1.88.0.24096-src.tar.gz",
+             *b = "VSCodium-1.88.0.24096-src.tar.gz.sha256",
+             *c = "VSCodium",
+             *d = "1.88.0.24096";
+        arr[0] = malloc(strlen(a) + 1);
+        strcpy(arr[0], a);
+        arr[1] = malloc(strlen(b) + 1);
+        strcpy(arr[1], b);
+        arr[2] = malloc(strlen(c) + 1);
+        strcpy(arr[2], c);
+        arr[3] = malloc(strlen(d) + 1);
+        strcpy(arr[3], d);
     }
     //Setting base URL
     curl_easy_setopt(curl, CURLOPT_URL, url);
