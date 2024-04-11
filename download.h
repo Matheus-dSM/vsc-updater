@@ -19,23 +19,20 @@ char **getfile(void){
     char *url = URL; 
     char *dname = D_NAME;
     char *tdname = TD_NAME;
-    char **arr;
+    char **arr = malloc(3 * sizeof(char *));
+    char *vdname;
 
     //Just for testing without keeping downloading
     if(sdflag == true){
-        arr = malloc(4 * sizeof(char *));
-            char *a = "VSCodium-1.88.0.24096-src.tar.gz",
+        char *a = "VSCodium-1.88.0.24096-src.tar.gz",
              *b = "VSCodium-1.88.0.24096-src.tar.gz.sha256",
-             *c = "VSCodium",
-             *d = "1.88.0.24096";
+             *c = "VSCodium-1.88.0.24096";
         arr[0] = malloc(strlen(a) + 1);
         strcpy(arr[0], a);
         arr[1] = malloc(strlen(b) + 1);
         strcpy(arr[1], b);
         arr[2] = malloc(strlen(c) + 1);
         strcpy(arr[2], c);
-        arr[3] = malloc(strlen(d) + 1);
-        strcpy(arr[3], d);
         return arr;
     }
     //Setting base URL
@@ -72,10 +69,18 @@ char **getfile(void){
         int ns = strlen(nurl[2]), vs = strlen(nurl[6]), es = strlen(FILE_END);
         nurl[7] = malloc((ns + vs + es) + 1);
         nurl[8] = malloc((ns + vs + (es = strlen(SHA_END))) + 1);
+
+
         //Making File name
         strcat(nurl[2], "-");
         strcpy(nurl[7], nurl[2]);
         strcat(nurl[7], nurl[6]);
+        //Info for later
+        arr[2] = malloc(strlen(nurl[7]) + 1);
+        strcpy(arr[2], nurl[7]);
+        vdname = malloc(strlen(arr[2]) + 1);
+        strcpy(vdname, arr[2]);
+        //Continue
         strcat(nurl[7], FILE_END);
         //Making SHA File name
         strcpy(nurl[8], nurl[7]);
@@ -95,34 +100,31 @@ char **getfile(void){
         vs = strlen(nurl[7]);
         es = strlen(nurl[8]);
 
-        //Moving to tmp and creating a dir there. There may be a faster way of doing this
-        //Assumes /tmp is created by default
+        //Making needed folders
+        //Move to /tmp-->dname-->vdname
+        if(dflag == true){fprintf(stderr,"Making directories...\n");}
+        STARTDIRMAKING: 
         if(chdir(tdname) == 0){
-            if(vflag == true || dflag == true){fprintf(stderr, "Moved to %s\n", tdname);}
-            //Try to move first, if not then create
             if(chdir(dname) == 0){
-                if(vflag == true || dflag == true){fprintf(stderr,"%s already created, moving to it\nContinuing...\n", dname);}
-            }
-            else if(mkdir(dname, 0755) == 0){
-                if(vflag == true || dflag == true){fprintf(stderr, "Created %s\n", dname);}
-                if(chdir(dname) == 0){
-                    if(vflag == true || dflag == true){fprintf(stderr,"Moved to %s\nContinuing...\n", dname);}
-                }
-                else{
-                    perror("Failed to move to new directory");
-                    return arr;
-                }
-            }
-            else{
-                perror("Failed to create new directory");
-                return arr;
-            }
-        }
-        else{
-            perror("Failed to move to /tmp");
-            return arr;
-        }
+                if(chdir(vdname) == 0){
+                    goto DIRMADE;
+                }else{goto MKVDNAME;}
+            }else{goto MKDNAME;}
+        }else{perror("Couldn't change to /tmp"); return arr;}
 
+        MKDNAME: 
+        if(mkdir(dname, 0755) == 0){
+            if(dflag == true || vflag == true){fprintf(stderr,"Created %s\n",dname);}
+            goto STARTDIRMAKING;
+        }else{perror("Couldn't create folder"); return arr;}
+
+        MKVDNAME: 
+        if(mkdir(vdname, 0755) == 0){
+            if(dflag == true || vflag == true){fprintf(stderr,"Created %s\n", vdname);}
+            goto STARTDIRMAKING;
+        }else{perror("Couldn't create folder"); return arr;}
+
+        DIRMADE:
         //Setting url
         char turl[ns + vs + es + 1];
         strcpy(turl, nurl[9]);
@@ -151,30 +153,29 @@ char **getfile(void){
         curl_easy_perform(curl);
         fclose(dFile);
         
-        //Closing the rest
         if(vflag == true || dflag == true){fprintf(stderr, "File saved\n");}
-        curl_easy_cleanup(curl);
-        curl_global_cleanup();
 
         //Last tidying up
         //Tidying up. Maybe some of the pointer were unnecessary but that was fun
 
-        arr = malloc(2 * sizeof(char *));
+        curl_easy_cleanup(curl);
+        curl_global_cleanup();
         arr[0] = malloc(strlen(nurl[7]) + 1) ;       
         strcpy(arr[0], nurl[7]);
         arr[1] = malloc(strlen(nurl[8]) + 1);
         strcpy(arr[1], nurl[8]);
-        free(murl);
-        murl = NULL;
+
         for(int i = 0; i < 10; i++){
             free(nurl[i]);
             nurl[i] = NULL;
         }
+        free(murl);
+        murl = NULL;
         free(nurl);
         nurl = NULL;
+        free(vdname);
+        vdname = NULL;
         if(vflag == true || dflag == true){fprintf(stderr,"Done.\n");}
-        
-
         return arr;
     }
     else{
