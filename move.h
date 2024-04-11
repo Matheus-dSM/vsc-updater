@@ -11,7 +11,10 @@
 int move(char **filearray){
     //Getting the current directory and changing it accordingly
     char cdir[PATH_MAX];//Current dir
-    char *tdir = malloc((strlen(TD_NAME) + strlen(D_NAME) + strlen("/")) + 1);// target dir
+    int size = strlen(TD_NAME) + strlen(D_NAME);
+    size += strlen("/") * 2;
+    size += strlen(filearray[2]);
+    char *tdir = malloc(size + 1);// target dir
     if(getcwd(cdir, sizeof(cdir)) != NULL){
         if(dflag == true || vflag == true){fprintf(stderr, "Current directory:%s\n", cdir);}
     }
@@ -19,18 +22,27 @@ int move(char **filearray){
         perror("Failed to acquire current directory\n");
         return 1;
     }
-    //Checking if same dir
+    //Making target dir
     strcpy(tdir, TD_NAME);
     strcat(tdir, "/");
     strcat(tdir, D_NAME);
+    strcat(tdir, "/");
+    strcat(tdir, filearray[2]);
+
     if(dflag == true){fprintf(stderr, "CURRENT:%s\nTARGET:%s\n",cdir, tdir);}
-    if(strcmp(cdir, tdir) != 0){
+    
+    //Check if same dir as target dir
+    if(strcmp(cdir, tdir) != 0){//If not same, change
         if(dflag == true || vflag == true){fprintf(stderr, "Changing directory to:%s\n", tdir);}
-    }
-    else{
-        if(dflag == true || vflag == true){fprintf(stderr, "Already on directory %s\n", tdir);}
-    }
-    //Getting contents of dir
+        if(chdir(tdir) == 0){//Changes dir
+            if(dflag == true || vflag == true){fprintf(stderr, "Directory changed.\n");}
+        }
+        else{perror("Couldn't change directory"); return 1;}
+    } //If same, continue
+    else{if(dflag == true || vflag == true){fprintf(stderr, "Already on directory %s\n", tdir);}}
+
+
+    //Getting contents of 
     DIR *wdir;//Working directory
     struct dirent *entry;
     wdir = opendir(tdir);
@@ -55,10 +67,11 @@ int move(char **filearray){
         fprintf(stderr,"Couldn't find files to extract\n");
         return 1;
     }
-    //Make folder for version 
-    //Move there, extract file
-    //Go back, make a new folder in user's home
-    //Go back with .. then move it to user's home.
+    //Check sum
+    //If fail, return 1 and warn
+    //If pass, delete SHA file and extract archive.
+    //After that, make file in user home, use .. and move it to a folder in user
+    //Do the rest
     closedir(wdir);
     free(tdir);
     return 0;
