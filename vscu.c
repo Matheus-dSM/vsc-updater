@@ -88,19 +88,18 @@ int main(int argc, char *argv[]){
     }
     */
     //TODO remove most fprinft from other files and most of them here?
-    if(sdflag == false){
-        fprintf(stderr, "Downloading files...\n");
-    }
+    if(sdflag == true){fprintf(stderr,"Skipping download...\n");}
+    if(sdflag == false){fprintf(stderr, "Downloading files...\n");}
     char **filearray = getfile();
     if(filearray == NULL){
         fprintf(stderr,"Failed to download files\n");
         return 1;
     }
     if(sdflag == false){
-        fprintf(stderr, "Downloading files...\n");
-        fprintf(stderr, "Done.\nFiles downloaded to /tmp\n"); 
-    }
+    fprintf(stderr, "Downloading files...\n");
+    fprintf(stderr, "Done.\nFiles downloaded to /tmp\n"); 
     fprintf(stderr, "Decompressing and moving...\n");
+    }
     if(move(filearray) != 0){
         fprintf(stderr, "Failed to execute changes\n");
         return 1;
@@ -114,6 +113,10 @@ int main(int argc, char *argv[]){
             actpair[i] = NULL;
         }
     }
+    for(int i = 0; i < 4; i++){
+        free(filearray[i]);
+        filearray[i] = NULL;
+    }
+    free(filearray);
     return 0;
-
 }
