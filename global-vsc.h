@@ -1,4 +1,7 @@
 #include <stdbool.h>
+#include <archive.h>
+#include <stdio.h>
+#include <archive_entry.h>
 
 //TODO Maybe make these not hardcoded?
 #define URL "https://github.com/VSCodium/vscodium/releases/latest/"
@@ -12,10 +15,27 @@ extern bool vflag;
 extern bool dflag;
 extern bool sdflag;
 
-struct returnlist{
-    int returncode;
-    char *filelist[2];//Since we are only dealing with two files, may change later
-};
+
+static int copy_data(struct archive *archRead, struct archive *archWrite){
+    int response;
+    const void *buffer;
+    size_t size;
+    la_int64_t offset;
+    for (;;){
+        response = archive_read_data_block(archRead, &buffer, &size, &offset);
+        if(response == ARCHIVE_EOF){//If end of file
+            return (ARCHIVE_EOF);
+        }
+        if(response < ARCHIVE_OK){//Warn if error
+            return (response);
+        }
+        response = archive_write_data_block(archWrite, buffer, size, offset);
+        if(response < ARCHIVE_OK){//Warn if error
+            fprintf(stderr, "%s\n", archive_error_string(archWrite));
+            return (response);
+        }
+    }
+}
 
 static void extract(const char *filename){
     struct archive *reader;
@@ -36,7 +56,7 @@ static void extract(const char *filename){
     archive_read_support_filter_all(reader);
     //Initialize writer and set option
     writer = archive_write_disk_new();
-    archive_write_disk_set_option(writer, flags);
+    archive_write_disk_set_options(writer, flags);
     archive_write_disk_set_standard_lookup(writer);
     //Open archive, quit if fail
     if((response = archive_read_open_filename(reader, filename, 10240))){
