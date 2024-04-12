@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <archive.h>
 #include <stdio.h>
+#include <ctype.h> // For toupper
 #include <archive_entry.h>
 
 //TODO Maybe make these not hardcoded?
@@ -14,6 +15,7 @@
 extern bool vflag;
 extern bool dflag;
 extern bool sdflag;
+extern bool ssflag;
 
 
 static int copy_data(struct archive *archRead, struct archive *archWrite){
@@ -37,7 +39,7 @@ static int copy_data(struct archive *archRead, struct archive *archWrite){
     }
 }
 
-static void extract(const char *filename){
+static int extract(const char *filename){
     struct archive *reader;
     struct archive *writer;
     struct archive_entry *entry;
@@ -104,5 +106,40 @@ static void extract(const char *filename){
     archive_read_free(reader);
     archive_write_close(writer);
     archive_write_free(writer);
-    exit(0);
+    return 0;
+}
+void strup(char *chptr){
+    for(int i = 0; chptr[i] != '\0'; i++){
+        chptr[i] = toupper(chptr[i]);
+    }
+}
+int ask(void){
+    ASKCONT: 
+    char ans[10];
+    int fail = 0;
+    if(fail == 0){
+        fprintf(stderr," [Y]es/[N]o: ");
+    }
+    if(fail == 3){
+        fprintf(stderr,"Too many failed attempts. Quitting...\n");
+        return 1;
+    }
+    scanf("%s", &ans);
+    strup(ans);
+    if(strcmp(ans, "NO") == 0 || strcmp(ans, "N") == 0 || 
+       strcmp(ans, "QUIT") == 0 || strcmp(ans, "Q") == 0 ||
+       strcmp(ans, "CLOSE") == 0 || strcmp(ans, "C") == 0){
+        fprintf(stderr,"Closing...\n");
+        return 1;
+    }
+    else if(strcmp(ans, "YES") == 0 || strcmp(ans, "Y") == 0){
+        return 0;
+    }
+    else{
+        fprintf(stderr,"Response not recognized.\n" \
+        "To continue, type Y or Yes.\n"\
+        "To cancel, type N or No.\n");
+        fail++;
+        goto ASKCONT;
+    }
 }
