@@ -24,9 +24,9 @@ char **getfile(void){
 
     //Just for testing without keeping downloading
     if(sdflag == true){
-        char *a = "VSCodium-1.88.0.24096-src.tar.gz",
-             *b = "VSCodium-1.88.0.24096-src.tar.gz.sha256",
-             *c = "VSCodium-1.88.0.24096";
+        char *a = "VSCodium-1.88.1.24102-src.tar.gz",
+             *b = "VSCodium-1.88.1.24102-src.tar.gz.sha256",
+             *c = "VSCodium-1.88.1.24102";
         arr[0] = malloc(strlen(a) + 1);
         strcpy(arr[0], a);
         arr[1] = malloc(strlen(b) + 1);
