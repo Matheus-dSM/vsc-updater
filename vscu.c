@@ -8,6 +8,7 @@
 #include "move.h"
 
 //Files (I wonder if these names are bad...)
+//global-vsc.h --> functions and global vars
 //download.h --> downloads files from url in url-vsc.h
 //move.h --> decompress and move to a location and overall makes it feel native
 //build.h --> if the rest went well, this will allow for allowing you to build from source  
@@ -16,80 +17,77 @@
 bool dflag = false;
 bool vflag = false;
 bool sdflag = false;
+bool ssflag = false;
 
 
 int main(int argc, char *argv[]){
-    //Makes a list of flags to pass to other files
-    //Don't know other way
-    //Struct on url-vsc.h
-    bool has_arg = false;
-    bool sdflag = false;
+
     char *actpair[2];//REMINDER Free the associated malloc'd pointers later
-    if(argc > 1){
-        for(int i = 1; argv[i] != NULL; i++){
-            int c;//TODO add a --help or -h flag
-            if(strcmp(argv[i], "--verbose") == 0){
-                c = 0;
-            }
-            else if(strcmp(argv[i], "--DEBUG") == 0){
-                c = 1;
-            }
-            else if(strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--version") == 0){
-                c = 2;
-            }
-            else if(strcmp(argv[i], "--DEBUG=SKIP-DL") == 0){
-                c = 3;
-            }
-            switch(c){
-                case 0:
-                    vflag = true;
-                    break;
-                case 1:
-                    dflag = true;
-                    break;
-                case 2:
-                    fprintf(stderr,"Program version: %s\n", VERSION);
-                    return 0;
-                    break;
-                case 3:
-                    fprintf(stderr,"Skipping download\n");
-                    sdflag = true; 
-                    dflag = true;
-                default://???
-                    break;
-            }
-            //just setting the layout for future features. Crude work. add more || later
-            //Add a feature for -h or --help later
-            if(strcmp(argv[i], "-d") == 0){
-                //If target of action NULL return 1 and error message;
-                if(argv[i+1] == NULL){
-                    fprintf(stderr,"Error. No argument after action flag\n");
-                    return 1;
-                }
-                else{
-                    //For simplicty sake I'll allow one operation like that
-                    actpair[0] = malloc(strlen("-d") + 1);
-                    strcpy(actpair[0], "-d");
-                    actpair[1] = malloc(strlen(argv[i + 1]) + 1);
-                    strcpy(actpair[1], argv[i + 1]);
-                    i++;
-                    has_arg = true;
-                }
-            }
+    if(argc == 2){
+        int c;
+        if(strcmp(argv[1], "--verbose") == 0){
+            vflag = true;
+        }
+        else if(strcmp(argv[1], "--DEBUG") == 0){
+            dflag = true;
+        }
+        else if(strcmp(argv[1], "-v") == 0 || strcmp(argv[1], "--version") == 0){
+            fprintf(stderr,"Program version: %s\n", VERSION);
+            return 0;
+        }
+        else if(strcmp(argv[1], "--DEBUG=SKIP-DL") == 0){
+            dflag = true;
+            sdflag = true;
+        }
+        else if(strcmp(argv[1], "--SKIP-SHA") == 0){
+            fprintf(stderr, "Skipping sha256sum...\n");
+            ssflag = true;
+        }
+        else if(strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0){
+            goto HELP;
+        }
+        else if(strcmp(argv[1], "-D") == 0 ||
+                strcmp(argv[1], "--DOWNLOAD") == 0 ||
+                strcmp(argv[1], "--download") == 0){
+            goto ASKCONT;
+        }//ADD ONE FOR HELP LATER
+    }
+    else if(argc > 2){//Check this later, seems brolken
+        goto PAIR;
+    }
+    else if(argc == 1){
+        goto HELP;
+    }
+
+    //Asking confirm
+    char ans[10];
+    int rask;
+    ASKCONT: 
+    if(sdflag == false){
+        fprintf(stderr,"Starting download of VSCodium, continue?");
+        rask = ask();
+        if(rask == 0){
+            fprintf(stderr,"Continuing...\n");
+            goto RUN;
+        }
+        else{
+            return 0;
         }
     }
-    if(dflag == true && actpair[0] != NULL){fprintf(stderr,"The pair is: %s and %s\n", actpair[0], actpair[1]);}
-    //TODO ADD switch case for options, like to delete etc
-    /*
-    switch(actpair[0]){
-        case X:
-            do Z()
-            ...
+    else if(sdflag == true){
+        fprintf(stderr,"Starting without download of VSCodium, continue?");
+        rask = ask();
+        if(rask == 0){
+            fprintf(stderr,"Skipping download...\n");
+            goto RUN;
+        }
+        else{
+            return 0;
+        }
     }
-    */
-    //TODO remove most fprinft from other files and most of them here?
-    if(sdflag == true){fprintf(stderr,"Skipping download...\n");}
-    if(sdflag == false){fprintf(stderr, "Downloading files...\n");}
+
+    RUN:
+    //Running the program
     char **filearray = getfile();
     if(filearray == NULL){
         fprintf(stderr,"Failed to download files\n");
@@ -100,23 +98,39 @@ int main(int argc, char *argv[]){
     fprintf(stderr, "Done.\nFiles downloaded to /tmp\n"); 
     fprintf(stderr, "Decompressing and moving...\n");
     }
-    if(move(filearray) != 0){
+    int rMove = move(filearray);
+    if(rMove == 1){
         fprintf(stderr, "Failed to execute changes\n");
+        return 1;
+    }
+    else if(rMove == 2){
+        fprintf(stderr,"Quitting.\n");
         return 1;
     }
     fprintf(stderr, "Done.\n");
     //Freeing list flags
     //Possibly unnecessary loop
-    if(has_arg == true){
-        for(int i = 0; i < 2; i++){
-            free(actpair[i]);
-            actpair[i] = NULL;
-        }
-    }
     for(int i = 0; i < 4; i++){
         free(filearray[i]);
         filearray[i] = NULL;
     }
     free(filearray);
+    return 0;
+
+
+    PAIR:
+    if(dflag == true && actpair[0] != NULL){fprintf(stderr,"The pair is: %s and %s\n", actpair[0], actpair[1]);}
+    //ADD more about pair
+    fprintf(stderr,"You inputed 2 args\n");
+    for(int i = 0; i < 2; i++){
+        free(actpair[i]);
+        actpair[i] = NULL;
+    }
+    return 0;
+
+
+    HELP:
+    //Write things related to the -h or help command here
+    fprintf(stderr,"no arg!!\n");
     return 0;
 }
