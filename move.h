@@ -22,7 +22,7 @@ int move(char **filearray){
         perror("Failed to acquire current directory\n");
         return 1;
     }
-    //Making target dir
+    //Making target dir ---NOTE---I forgot I could have used snprintf...
     strcpy(tdir, TD_NAME);
     strcat(tdir, "/");
     strcat(tdir, D_NAME);
@@ -68,11 +68,117 @@ int move(char **filearray){
         return 1;
     }
     //Check sum
-    //If fail, return 1 and warn
-    //If pass, delete SHA file and extract archive.
-    //After that, make file in user home, use .. and move it to a folder in user
-    //Do the rest
+    if(ssflag == false){
+
+        //Reading local sha
+        int size = 256;
+        FILE *shafile;
+        shafile = fopen(filearray[1], "r");
+        if(shafile == NULL){
+            fprintf(stderr,"Couldn't open sha256 file for reading\n");
+            return 1;
+        }
+        char *shafileresp = malloc(size);
+        fread(shafileresp, sizeof(char), size, shafile);
+        shafileresp = strtok(shafileresp, " ");
+
+
+        //Calling your local sha256sum.
+        char *sha = "sha256sum ";
+        char *shacmd = malloc(strlen(sha) + strlen(filearray[0]) + 1);
+        char buffer[size];
+        char *sharesp = malloc(size);
+        sharesp[0] = '\0';//Gotta do this to fix broken characters
+        strcpy(shacmd, sha);
+        strcat(shacmd, filearray[0]);
+        //Doing it
+        FILE *pipe = popen(shacmd, "r");
+        if(!pipe){
+            fprintf(stderr, "Couldn't open pipe\n");
+            return 1;
+        }
+        while(fgets(buffer, sizeof(buffer), pipe) != NULL){
+            strcat(sharesp, buffer);
+        }
+        sharesp = strtok(sharesp, " ");
+
+
+        if(dflag == true){fprintf(stderr,"READ FROM FILE:%s\nREAD FROM RESPONSE:%s\n",
+                                                            shafileresp, sharesp);}
+        if(strcmp(sharesp, shafileresp) == 0){
+            if(dflag == true){fprintf(stderr,"sha256 match.\nContinuing...\n");}
+        }
+        else{
+            fprintf(stderr,"sha256 did not match. Quitting.\n");
+            return 1;
+        }
+        free(shacmd);
+        free(sharesp);
+        free(shafileresp);
+        fclose(shafile);
+        pclose(pipe);
+    }
+    //Removing the SHA either way
+    if(remove(filearray[1]) == 0){
+        if(dflag == true){fprintf(stderr,"Deleted %s\n", filearray[1]);}
+    }
+    else{
+        perror("Failed to delete sha256 file");
+        return 1;
+    }
+
+    //Extracting
+    if(extract(filearray[0]) == 0){
+        if(dflag == true){fprintf(stderr,"Extracted successfully\n");}
+    }
+    else{//It exits anyway, but just making sure
+        return 1;
+    }
+
+    if(remove(filearray[0]) == 0){
+        if(dflag == true){fprintf(stderr,"Deleted %s\n", filearray[0]);}
+    }
+    //Getting your username
+    char *uname = getlogin();
+    if(uname == NULL){
+        perror("Failed to get user's name");
+        return 1;
+    }
+    if(dflag == true){fprintf(stderr,"USERNAME:%s", uname);}
+
+    //Making folder in home, asking for confirm
+    fprintf(stderr,"A folder will be created on your home directory. Continue?");
+    int rask = ask();
+    if(rask == 1){
+        return 2;//Return this (2) if quit but no errors
+    }
+    //Create folder on X place, or default?
+    fprintf(stderr,"Create on home?");
+    rask = ask();
+    if(rask == 1){
+        //IF respond no
+        goto PICKFOLDER;
+    }
+    else if(rask == 0){
+        //If respon yes, just continue
+    }
+    ASKHID:
+    //Hidden folder or not?
+    fprintf(stderr,"Make if a hidden folder?");
+    rask = ask();
+    if(rask == 0){
+        //IF yes
+    }
+    else if(rask == 1){
+        //If no...
+    }
+    
     closedir(wdir);
     free(tdir);
     return 0;
+
+    PICKFOLDER: 
+
+
+    goto ASKHID;
 }
