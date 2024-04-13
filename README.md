@@ -1,27 +1,24 @@
 # VSCodium Updater
 
-The goal of this project is create an updater for VSCodium in C.
+## Overview
+The goal of this project, as the name suggests, is to create an updater for VSCodium in C. What it doesn't tell is that it only targets Linux.
 
-It may be unnecessary but I'm doing it for learning purposes.
+It may be unnecessary, but I'm doing it for learning purposes, and as you might expect, the program's
+quality is beginner level.
 
-In the end, if this goes far, I'd like to be capable of:
+## Features
+This program will fetch the latest version and download it to a predetermined directory, or one of your choosing. 
 
-Updating VSCodium
--
-At first the builds, then AppImages and maybe allow for building source code.
-and making it feel "native"
+It will create a bash script that you can add to your other local scripts to more easily open VSCodium.
 
-Getting older versions and allowing for switching of those.
--
-If possible, allowing for that with different formats 
-
-Configuration
--
-Of save location, download and not update, etc.
+## Contributing & Others
+Feel free to suggest changes or improvements, naturally, respectfully.
 
 
-Cooler visuals 
--
-
-If this turns robust enough, allow for other programs to be added too
--
+## Building & Usage
+I used libarchive, curls and will call some of your system's (very basic) utils.
+To build:
+```
+gcc -o FOO vscu.c -larchve -lcurl
+```
+To use it, I hope my simple built-in help page will be enough. To see it, run the program without any arguments, or use ```-h``` or ```--help```
