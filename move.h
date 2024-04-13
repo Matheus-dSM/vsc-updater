@@ -300,7 +300,7 @@ int move(char **filearray){
     
     //Chmod to make it executable
 
-    mode_t mode = S_IXUSR;//Only user can exec
+    mode_t mode = S_IXUSR | S_IRUSR | S_IWUSR;//Only user can exec, read and write
     if(chmod(vscname, mode) == 0){
         if(dflag== true){fprintf(stderr,"%s is now executable\n", vscname);}
     }
