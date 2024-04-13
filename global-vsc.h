@@ -11,7 +11,7 @@
 #define FILE_END_FULL ".tar.gz"
 #define D_NAME "vscu"
 #define TD_NAME "/tmp"
-#define VERSION "1.0.0"//Just an example
+#define VERSION "1.0.1"//Just an example
 
 extern bool vflag;
 extern bool dflag;
