@@ -11,6 +11,7 @@ static size_t writeFile(char *data, size_t size, size_t nmemb, void *stream);
 
 char **getfile(void){
 
+
     //Basic setup
     curl_global_init(CURL_GLOBAL_ALL);
     CURL *curl = curl_easy_init();
@@ -22,7 +23,7 @@ char **getfile(void){
     char **arr = malloc(3 * sizeof(char *));
     char *vdname;
 
-    //Just for testing without keeping downloading
+    //Just for testing without keeping downloading.
     if(sdflag == true){
         char *a = "VSCodium-1.88.1.24102-src.tar.gz",
              *b = "VSCodium-1.88.1.24102-src.tar.gz.sha256",
@@ -66,13 +67,24 @@ char **getfile(void){
         char *murl = malloc(msize + 1);
         snprintf(murl, (msize + 1), "%s//%s/%s/%s/%s/download/%s/", nurl[0], nurl[1], nurl[2], nurl[3], nurl[4], nurl[6]);
         strcpy(url, murl); 
-        int ns = strlen(nurl[2]), vs = strlen(nurl[6]), es = strlen(FILE_END);
+
+        int n2l;
+        if(sflag == true){
+            n2l = strlen(nurl[2]);
+            nurl[2] = realloc(nurl[2], (n2l * 2));
+            strcat(nurl[2], "-");
+        }
+        else if(sflag == false){
+            n2l = strlen(nurl[2]);
+            nurl[2] = realloc(nurl[2], (n2l * 4));
+            strcat(nurl[2], "-linux-x64-");
+        }
+        int ns = strlen(nurl[2]) * 2, vs = strlen(nurl[6]), es = strlen(FILE_END);
         nurl[7] = malloc((ns + vs + es) + 1);
-        nurl[8] = malloc((ns + vs + (es = strlen(SHA_END))) + 1);
+        nurl[8] = malloc((ns + vs + (es * 2)) + 1);
 
 
         //Making File name
-        strcat(nurl[2], "-");
         strcpy(nurl[7], nurl[2]);
         strcat(nurl[7], nurl[6]);
         //Info for later
@@ -81,7 +93,12 @@ char **getfile(void){
         vdname = malloc(strlen(arr[2]) + 1);
         strcpy(vdname, arr[2]);
         //Continue
-        strcat(nurl[7], FILE_END);
+        if(sflag == true){
+            strcat(nurl[7], FILE_END);
+        }
+        else if(sflag == false){
+            strcat(nurl[7], FILE_END_FULL);
+        }
         //Making SHA File name
         strcpy(nurl[8], nurl[7]);
         strcat(nurl[8], SHA_END);   

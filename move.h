@@ -1,8 +1,9 @@
 #include <stdio.h>
+#include <fcntl.h> //for rename at 2
 #include <string.h>//Strings
 #include <stdlib.h>//Misc, mainly malloc
 #include <unistd.h>//For chdir
-#include <sys/stat.h>//For creating the dir
+#include <sys/stat.h>//For creating the dir, and chmod
 #include <stdbool.h>//For bool for the -v flag check
 #include <limits.h>//For PATH_MAX
 #include <dirent.h>//For using directories
@@ -10,10 +11,14 @@
 
 int move(char **filearray){
     //Getting the current directory and changing it accordingly
+    bool folderpick;
+    int cmdresp;
+    char *command = malloc(300);//Excessive, I know
+    char seldir[PATH_MAX];
     char cdir[PATH_MAX];//Current dir
     int size = strlen(TD_NAME) + strlen(D_NAME);
     size += strlen("/") * 2;
-    size += strlen(filearray[2]);
+    size += strlen(filearray[2]) * 2;
     char *tdir = malloc(size + 1);// target dir
     if(getcwd(cdir, sizeof(cdir)) != NULL){
         if(dflag == true || vflag == true){fprintf(stderr, "Current directory:%s\n", cdir);}
@@ -144,41 +149,210 @@ int move(char **filearray){
         perror("Failed to get user's name");
         return 1;
     }
-    if(dflag == true){fprintf(stderr,"USERNAME:%s", uname);}
+    if(dflag == true){fprintf(stderr,"USERNAME:%s\n", uname);}
 
     //Making folder in home, asking for confirm
-    fprintf(stderr,"A folder will be created on your home directory. Continue?");
-    int rask = ask();
-    if(rask == 1){
+    fprintf(stderr,"Changes will be made to your home directory. Continue? ");
+    int rask;
+    rask = ask();
+    if(rask == 1 || rask == 2){
         return 2;//Return this (2) if quit but no errors
     }
+
+    ASKCREATE:
+    char *userhome = malloc(strlen("/home/") + (strlen("/") * 4) 
+                    + strlen(uname) + (strlen(filearray[2]) * 3) + 1 );
+    strcpy(userhome, "/home/");
+    strcat(userhome, uname);
+    bool hide_folder;
     //Create folder on X place, or default?
-    fprintf(stderr,"Create on home?");
+    fprintf(stderr,"Create on home? ");
     rask = ask();
     if(rask == 1){
         //IF respond no
-        goto PICKFOLDER;
+        fprintf(stderr,"Do you wish to select a save folder? ");
+        rask = ask();
+        if(rask == 0){
+            goto PICKFOLDER;
+        }
+        else{
+            fprintf(stderr,"Closing...\n");
+            return 2;
+        }
     }
     else if(rask == 0){
         //If respon yes, just continue
+
     }
-    ASKHID:
+    else if(rask == 2){
+        //If quit/close
+        return 2;
+    }
     //Hidden folder or not?
-    fprintf(stderr,"Make if a hidden folder?");
+    fprintf(stderr,"Make it a hidden folder? ");
     rask = ask();
     if(rask == 0){
         //IF yes
+        hide_folder = true;
     }
     else if(rask == 1){
         //If no...
+        hide_folder = false;
     }
+    //Create folder
+    char *finaldir = malloc((strlen(filearray[2]) * 2) + 1);
+    if(hide_folder == true){
+        strcpy(finaldir,".VSC-Updater");
+    }
+    else if(hide_folder == false){
+        strcpy(finaldir,"VSC-Updater");
+    }
+    //change to home
+    if(chdir(userhome) == 0){
+        if(dflag == true){fprintf(stderr,"Changed to %s\n", userhome);}
+    }
+    else{
+        perror("Couldn't change to user's home");
+        return 1;
+    }
+    //Create a folder for VSCU if not already
+    int chdirr = chdir(finaldir);
+    if(chdirr != 0){
+        if(mkdir(finaldir, 0700) == 0){
+            if(dflag == true){fprintf(stderr,"Directory %s created\n", finaldir);}
+        }
+        else{
+            perror("Failed to create directory at home");
+            return 1;
+        }
+    }
+    else if(chdirr == 0){
+        if(dflag == true){fprintf(stderr,"Directory %s already created, moved to it\n", finaldir);}
+    }
+    //Return to /tmp
+    if(chdir(tdir) == 00){
+        if(dflag == true){fprintf(stderr,"Changed to %s\n", tdir);}
+    }
+    else{
+        perror("Couldn't change to directory where extracted files are at");
+        return 1;
+    }
+    //Move the extracted folder to there
+    strcat(userhome, "/");
+    strcat(userhome, finaldir);
+    strcat(userhome, "/");
+    snprintf(command, 300, "mv %s %s", tdir, userhome);
+    cmdresp = system(command);
+    if(cmdresp == 0){
+        if(dflag == true){fprintf(stderr,
+        "Moved %s to %s\n", tdir, userhome
+        );}
+    }
+    else{
+        fprintf(stderr,"Failed to move folders.\n");
+        return 1;
+    }
+
+    MAKENATIVE:
+    fprintf(stderr,"\n\nA bash script will be created on %s\n"\
+    "This is done to avoid use of root privileges in this project.\n"\
+    "Move it to wherever your PATH will read from.\n"
+    "If you used --source, this may be useless.\n\n", userhome);
+    if(chdir(userhome) == 0){
+        if(dflag == true){fprintf(stderr,"Moved to %s\n", userhome);}
+    }
+    else{
+        perror("Failed to move to folder");
+        return 1;
+    }
+    char vscname[10];
+    fprintf(stderr,"How do you wish to name the script? ");
+    rask = ask();
+    if(rask == 0){
+        fprintf(stderr,"Maximum of 10 characters: ");
+        scanf("%s", &vscname);
+    }
+    else if(rask == 1){
+        strcpy(vscname, "vscodium");
+        fprintf(stderr,"The name default to %s\n", vscname);
+    }
+    else if(rask == 2){
+        fprintf(stderr,"Canceling...\n");
+        return 1;
+    }
+    FILE *bashscript = fopen(vscname, "w");
+    if(bashscript == NULL){
+        fprintf(stderr, "Failed to open file for writing\n");
+        return 1;
+    }
+    //Create file
+    char *scriptcontent = malloc(1000);
+    if(folderpick == false){
+        strcat(userhome, filearray[2]);
+        strcat(userhome, "/");
+    }
+    snprintf(scriptcontent, 1000, "#!/bin/bash\n"
+                                   "\n"
+                                   "PDIR=\"%s\"\n"
+                                   "\n"
+                                   "exec \"${PDIR}/./codium\" \"$@\"", userhome);
+    fprintf(bashscript, "%s", scriptcontent);
     
+    //Chmod to make it executable
+
+    mode_t mode = S_IXUSR;//Only user can exec
+    if(chmod(vscname, mode) == 0){
+        if(dflag== true){fprintf(stderr,"%s is now executable\n", vscname);}
+    }
+    else{
+        perror("Couldn't run chmod on the file");
+        return 1;
+    }
+
+
+    //That's all?
+    fclose(bashscript);
     closedir(wdir);
     free(tdir);
+    free(finaldir);
+    free(userhome);
+    free(command);
+    free(scriptcontent);
     return 0;
 
     PICKFOLDER: 
-
-
-    goto ASKHID;
+    strcat(userhome, "/");
+    fprintf(stderr,"Ensure the folder already exists, then type the desired save location.\n" \
+    "The base location is: %s", userhome);// -> /home/USER/
+    scanf("%s", seldir);
+    strcat(userhome, seldir); //-->/home/USER/FOLDER
+    strcat(userhome, "/");
+    strcat(userhome, filearray[2]);
+    folderpick = true;
+    fprintf(stderr,"The final location will be: %s \nContinue? ", userhome);
+    rask = ask();
+    if(rask == 0){
+        fprintf(stderr,"Continuing...");
+    }
+    else if(rask == 1){
+        fprintf(stderr,"Restarting...\n");
+        goto ASKCREATE;
+    }
+    else{
+        fprintf(stderr,"Quitting.\n");
+        return 2;
+    }
+    snprintf(command, 300, "mv %s %s", tdir, userhome);
+    cmdresp = system(command);
+    if(cmdresp == 0){
+        if(dflag == true){fprintf(stderr,
+        "Moved %s to %s\n", tdir, userhome
+        );}
+    }
+    else{
+        fprintf(stderr,"Failed to move folders.\n");
+        return 1;
+    }
+    goto MAKENATIVE;
+    return 1;
 }

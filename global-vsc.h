@@ -8,6 +8,7 @@
 #define URL "https://github.com/VSCodium/vscodium/releases/latest/"
 #define FILE_END "-src.tar.gz"
 #define SHA_END ".sha256"
+#define FILE_END_FULL ".tar.gz"
 #define D_NAME "vscu"
 #define TD_NAME "/tmp"
 #define VERSION "1.0.0"//Just an example
@@ -16,6 +17,7 @@ extern bool vflag;
 extern bool dflag;
 extern bool sdflag;
 extern bool ssflag;
+extern bool sflag;
 
 
 static int copy_data(struct archive *archRead, struct archive *archWrite){
@@ -118,7 +120,7 @@ int ask(void){
     char ans[10];
     int fail = 0;
     if(fail == 0){
-        fprintf(stderr," [Y]es/[N]o: ");
+        fprintf(stderr,"[Y]es/[N]o: ");
     }
     if(fail == 3){
         fprintf(stderr,"Too many failed attempts. Quitting...\n");
@@ -126,14 +128,15 @@ int ask(void){
     }
     scanf("%s", &ans);
     strup(ans);
-    if(strcmp(ans, "NO") == 0 || strcmp(ans, "N") == 0 || 
-       strcmp(ans, "QUIT") == 0 || strcmp(ans, "Q") == 0 ||
-       strcmp(ans, "CLOSE") == 0 || strcmp(ans, "C") == 0){
-        fprintf(stderr,"Closing...\n");
+    if(strcmp(ans, "NO") == 0 || strcmp(ans, "N") == 0){
         return 1;
     }
     else if(strcmp(ans, "YES") == 0 || strcmp(ans, "Y") == 0){
         return 0;
+    }
+    else if(strcmp(ans, "QUIT") == 0 || strcmp(ans, "Q") == 0 ||
+       strcmp(ans, "CLOSE") == 0 || strcmp(ans, "C") == 0){
+        return 2;
     }
     else{
         fprintf(stderr,"Response not recognized.\n" \
