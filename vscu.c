@@ -9,15 +9,15 @@
 
 //Files (I wonder if these names are bad...)
 //global-vsc.h --> functions and global vars
-//download.h --> downloads files from url in url-vsc.h
-//move.h --> decompress and move to a location and overall makes it feel native
-//build.h --> if the rest went well, this will allow for allowing you to build from source  
+//download.h --> downloads files from url in global-vsc.h
+//move.h --> decompress and move to a location and add the bash script
 //manager.h --> if we get this far, this will be for managing versions or othen adv actions
 
 bool dflag = false;
 bool vflag = false;
 bool sdflag = false;
 bool ssflag = false;
+bool sflag = false;
 
 
 int main(int argc, char *argv[]){
@@ -50,7 +50,11 @@ int main(int argc, char *argv[]){
                 strcmp(argv[1], "--DOWNLOAD") == 0 ||
                 strcmp(argv[1], "--download") == 0){
             goto ASKCONT;
-        }//ADD ONE FOR HELP LATER
+        }
+        else if(strcmp(argv[1], "--SOURCE") == 0 ||
+                strcmp(argv[1], "--source") == 0){
+            sflag = true;
+        }
     }
     else if(argc > 2){//Check this later, seems brolken
         goto PAIR;
@@ -64,24 +68,26 @@ int main(int argc, char *argv[]){
     int rask;
     ASKCONT: 
     if(sdflag == false){
-        fprintf(stderr,"Starting download of VSCodium, continue?");
+        fprintf(stderr,"Starting download of VSCodium, continue? ");
         rask = ask();
         if(rask == 0){
             fprintf(stderr,"Continuing...\n");
             goto RUN;
         }
         else{
+            fprintf(stderr,"Closing...\n");
             return 0;
         }
     }
     else if(sdflag == true){
-        fprintf(stderr,"Starting without download of VSCodium, continue?");
+        fprintf(stderr,"Starting without download of VSCodium, continue? ");
         rask = ask();
         if(rask == 0){
             fprintf(stderr,"Skipping download...\n");
             goto RUN;
         }
         else{
+            fprintf(stderr,"Closing...\n");
             return 0;
         }
     }
@@ -110,18 +116,19 @@ int main(int argc, char *argv[]){
     fprintf(stderr, "Done.\n");
     //Freeing list flags
     //Possibly unnecessary loop
-    for(int i = 0; i < 4; i++){
+    for(int i = 0; i < 3; i++){
         free(filearray[i]);
         filearray[i] = NULL;
     }
     free(filearray);
+    filearray = NULL;
     return 0;
 
 
     PAIR:
     if(dflag == true && actpair[0] != NULL){fprintf(stderr,"The pair is: %s and %s\n", actpair[0], actpair[1]);}
     //ADD more about pair
-    fprintf(stderr,"You inputed 2 args\n");
+    fprintf(stderr,"You inputed 2 args. This part is not written yet\n");
     for(int i = 0; i < 2; i++){
         free(actpair[i]);
         actpair[i] = NULL;
@@ -131,6 +138,11 @@ int main(int argc, char *argv[]){
 
     HELP:
     //Write things related to the -h or help command here
-    fprintf(stderr,"no arg!!\n");
+    fprintf(stderr,"Commands:\n"\
+                   "-h or --help displays this screen\n"\
+                   "-D or --download will download VSCodium\n"\
+                   "--source will instead download the source code of VSCodium\n"\
+                   "-v or --version will display the version\n"\
+                   "--SKIP-SHA to not check the sha256sum of the download\n");
     return 0;
 }
