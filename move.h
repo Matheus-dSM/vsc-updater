@@ -27,7 +27,7 @@ int move(char **filearray){
         perror("Failed to acquire current directory\n");
         return 1;
     }
-    //Making target dir ---NOTE---I forgot I could have used snprintf...
+    //Making target dir ---NOTE--- I forgot I could have used snprintf...
     strcpy(tdir, TD_NAME);
     strcat(tdir, "/");
     strcat(tdir, D_NAME);
@@ -143,6 +143,7 @@ int move(char **filearray){
     if(remove(filearray[0]) == 0){
         if(dflag == true){fprintf(stderr,"Deleted %s\n", filearray[0]);}
     }
+
     //Getting your username
     char *uname = getlogin();
     if(uname == NULL){
@@ -159,6 +160,7 @@ int move(char **filearray){
         return 2;//Return this (2) if quit but no errors
     }
 
+    //Ask where the user wants things to be moved to
     ASKCREATE:
     char *userhome = malloc(strlen("/home/") + (strlen("/") * 4) 
                     + strlen(uname) + (strlen(filearray[2]) * 3) + 1 );
@@ -181,7 +183,7 @@ int move(char **filearray){
         }
     }
     else if(rask == 0){
-        //If respon yes, just continue
+        //If respond yes, just continue
 
     }
     else if(rask == 2){
@@ -207,7 +209,7 @@ int move(char **filearray){
     else if(hide_folder == false){
         strcpy(finaldir,"VSC-Updater");
     }
-    //change to home
+    //Change to home
     if(chdir(userhome) == 0){
         if(dflag == true){fprintf(stderr,"Changed to %s\n", userhome);}
     }
@@ -240,7 +242,7 @@ int move(char **filearray){
     //Move the extracted folder to there
     strcat(userhome, "/");
     strcat(userhome, finaldir);
-    strcat(userhome, "/");
+    strcat(userhome, "/");//Probably will be /home/USERNAME/PICKEDFOLDER_OR_VSC-Updater/VSCodium-VERSION/
     snprintf(command, 300, "mv %s %s", tdir, userhome);
     cmdresp = system(command);
     if(cmdresp == 0){
@@ -254,9 +256,9 @@ int move(char **filearray){
     }
 
     MAKENATIVE:
-    fprintf(stderr,"\n\nA bash script will be created on %s\n"\
-    "This is done to avoid use of root privileges in this project.\n"\
-    "Move it to wherever your PATH will read from.\n"
+    fprintf(stderr,"\n\nA bash script will be created %s, in a folder named \"vscuscript\"\n"\
+    "This is done to avoid use of root privileges in this project and other problems.\n"\
+    "Move it to wherever your PATH will read from, and remember to remove the folder I created.\n"
     "If you used --source, this may be useless.\n\n", userhome);
     if(chdir(userhome) == 0){
         if(dflag == true){fprintf(stderr,"Moved to %s\n", userhome);}
@@ -265,6 +267,24 @@ int move(char **filearray){
         perror("Failed to move to folder");
         return 1;
     }
+    char *subfname = "vscuscript";
+    //Create dir, move there then continue
+    //Done to avoid
+    if(mkdir(subfname, 0700) == 0){
+        if(dflag == true){fprintf(stderr,"Created folder name %s\n", subfname);}
+    }
+    else{
+        perror("Failed to create folder vscuscript");
+        return 1;
+    }
+    if(chdir(subfname) == 0){
+        if(dflag == true){fprintf(stderr,"Moved to folder %s\n", subfname);}
+    }
+    else{
+        perror("Failed to move to folder vscuscript");
+        return 1;
+    }
+
     char vscname[10];
     fprintf(stderr,"How do you wish to name the script? ");
     rask = ask();
@@ -323,6 +343,7 @@ int move(char **filearray){
     PICKFOLDER: 
     strcat(userhome, "/");
     fprintf(stderr,"Ensure the folder already exists, then type the desired save location.\n" \
+    "Do not put a / in the end \n"
     "The base location is: %s", userhome);// -> /home/USER/
     scanf("%s", seldir);
     strcat(userhome, seldir); //-->/home/USER/FOLDER
