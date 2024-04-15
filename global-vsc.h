@@ -11,15 +11,15 @@
 #define FILE_END_FULL ".tar.gz"
 #define D_NAME "vscu"
 #define TD_NAME "/tmp"
-#define VERSION "1.0.1"//Just an example
+#define VERSION "1.0.2"//Just an example
+                    //If you're reading this. Huge change.Moderate change. Minor change.
 
 extern bool vflag;
 extern bool dflag;
-extern bool sdflag;
 extern bool ssflag;
 extern bool sflag;
 
-
+//Used with extract
 static int copy_data(struct archive *archRead, struct archive *archWrite){
     int response;
     const void *buffer;
@@ -41,6 +41,7 @@ static int copy_data(struct archive *archRead, struct archive *archWrite){
     }
 }
 
+//Extracts a folder
 static int extract(const char *filename){
     struct archive *reader;
     struct archive *writer;
@@ -110,11 +111,13 @@ static int extract(const char *filename){
     archive_write_free(writer);
     return 0;
 }
+//My toupper for strings
 void strup(char *chptr){
     for(int i = 0; chptr[i] != '\0'; i++){
         chptr[i] = toupper(chptr[i]);
     }
 }
+//To avoid rewriting this all the time, a function to ask the user's input.
 int ask(void){
     ASKCONT: 
     char ans[10];

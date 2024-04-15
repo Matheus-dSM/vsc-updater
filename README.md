@@ -15,11 +15,17 @@ Feel free to suggest changes or improvements, naturally, respectfully. If possib
 
 ## Building & Usage
 I used libarchive, curls and will call some of your system's (very basic) utils.
+
 To build:
 ```
 gcc -o FOO vscu.c -larchve -lcurl
 ```
 To use it, I hope my simple built-in help page will be enough. To see it, run the program without any arguments, or use ```-h``` or ```--help```
+
+To run, just do:
+```
+./FOO 
+```
 
 To delete what was downloaded, you'll only need to either delete the folder "VSC-Updater" or if you chose to have it be hidden, ".VSC-Updater". If you picked a custom folder, deleting it or the VSCodium-*version* folder will do. Don't forget to remove the bash script if you chose to move it somewhere else.
 

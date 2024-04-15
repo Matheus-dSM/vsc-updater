@@ -13,29 +13,21 @@ char **getfile(void){
 
 
     //Basic setup
+    //Starts curl
     curl_global_init(CURL_GLOBAL_ALL);
     CURL *curl = curl_easy_init();
+    //Curl's response.
     CURLcode rerr;
+    //File we'll use
     FILE *dFile;
+    //---------------
     char *url = URL; 
     char *dname = D_NAME;
-    char *tdname = TD_NAME;
+    char *tdname = TD_NAME;//Temp dir
     char **arr = malloc(3 * sizeof(char *));
-    char *vdname;
+    char *vdname;//Version dir
 
-    //Just for testing without keeping downloading.
-    if(sdflag == true){
-        char *a = "VSCodium-1.88.1.24102-src.tar.gz",
-             *b = "VSCodium-1.88.1.24102-src.tar.gz.sha256",
-             *c = "VSCodium-1.88.1.24102";
-        arr[0] = malloc(strlen(a) + 1);
-        strcpy(arr[0], a);
-        arr[1] = malloc(strlen(b) + 1);
-        strcpy(arr[1], b);
-        arr[2] = malloc(strlen(c) + 1);
-        strcpy(arr[2], c);
-        return arr;
-    }
+
     //Setting base URL
     curl_easy_setopt(curl, CURLOPT_URL, url);
     rerr = curl_easy_perform(curl);
@@ -63,6 +55,7 @@ char **getfile(void){
             //Total length of elements added up
             sc += strlen(nurl[i]);
         }  
+        //Rebuilding url for the download of new version
         int msize = (sc + (2 * (strlen(URL))));
         char *murl = malloc(msize + 1);
         snprintf(murl, (msize + 1), "%s//%s/%s/%s/%s/download/%s/", nurl[0], nurl[1], nurl[2], nurl[3], nurl[4], nurl[6]);
